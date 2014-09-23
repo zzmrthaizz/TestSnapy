@@ -10,11 +10,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.snappydb.DB;
+import com.snappydb.DBFactory;
+import com.snappydb.SnappydbException;
+
 import java.util.List;
 
-import butterknife.InjectView;
-import butterknife.OnClick;
-import model.AuditReportItem;
 import model.Session;
 import network.NetworkClient;
 import util.Logger;
@@ -22,6 +23,7 @@ import util.Logger;
 
 public class MyActivity extends Activity {
 
+	DB snappydb;
 	Button mLoginButton;
 	EditText etemail;
 	EditText etpassword;
@@ -46,6 +48,13 @@ public class MyActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_my);
+
+		try {
+			snappydb  = DBFactory.open(this);
+		} catch (SnappydbException e) {
+			e.printStackTrace();
+		}
+
 
 		StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
 				.detectDiskReads()
@@ -74,6 +83,13 @@ public class MyActivity extends Activity {
 				List<Session> user = NetworkClient.getInstance().getContainerSessionsByPage(getApplicationContext(), "Token " + token,1, "");
 //				List<AuditReportItem> auditReportItem = user.getAudit_report_items();
 				Logger.e(user.toString());
+				for (Session container: user){
+					try {
+						snappydb.put(String.valueOf(container.getId()), container);
+					} catch (SnappydbException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		});
 	}

@@ -29,4 +29,6 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.0.0'
     compile 'com.koushikdutta.ion:ion:1.+'
     compile 'de.greenrobot:eventbus:2.2.1'
+    compile 'com.snappydb:snappydb-lib:0.4.0'
+    compile 'com.esotericsoftware.kryo:kryo:2.24.0'
 }
