@@ -43,6 +43,9 @@ public class Session {
 
     public static final Uri URI = Uri.parse("content://" + User.AUTHORITY + "/" + TABLE);
 
+	public String toString(){
+		return String.valueOf(container_id);
+	}
     public int getId() {
         return id;
     }

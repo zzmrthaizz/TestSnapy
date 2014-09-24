@@ -1,6 +1,9 @@
 package com.example.thai.testsnapy;
 
 import android.app.Activity;
+import android.app.LoaderManager;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
@@ -9,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 
 import com.snappydb.DB;
 import com.snappydb.DBFactory;
@@ -21,12 +25,14 @@ import network.NetworkClient;
 import util.Logger;
 
 
-public class MyActivity extends Activity {
+public class MyActivity extends Activity implements LoaderManager.LoaderCallbacks<Cursor> {
 
 	DB snappydb;
 	Button mLoginButton;
 	EditText etemail;
 	EditText etpassword;
+	ListView lvContainer;
+	Button btngetContainer;
 
 //	@OnClick(R.id.btn_login)
 //	void doLogin() {
@@ -50,7 +56,7 @@ public class MyActivity extends Activity {
 		setContentView(R.layout.activity_my);
 
 		try {
-			snappydb  = DBFactory.open(this);
+			snappydb = DBFactory.open(this);
 		} catch (SnappydbException e) {
 			e.printStackTrace();
 		}
@@ -72,6 +78,8 @@ public class MyActivity extends Activity {
 		mLoginButton = (Button) findViewById(R.id.btn_login);
 		etemail = (EditText) findViewById(R.id.email);
 		etpassword = (EditText) findViewById(R.id.password);
+		lvContainer = (ListView) findViewById(R.id.lv_list);
+		btngetContainer = (Button) findViewById(R.id.btn_getUser);
 
 		mLoginButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -80,15 +88,41 @@ public class MyActivity extends Activity {
 				String password = etpassword.getText().toString();
 				String token = NetworkClient.getInstance().getToken(getApplicationContext(), email, password);
 				Log.e("Results: ", token);
-				List<Session> user = NetworkClient.getInstance().getContainerSessionsByPage(getApplicationContext(), "Token " + token,1, "");
+				List<Session> user = NetworkClient.getInstance().getContainerSessionsByPage(getApplicationContext(), "Token " + token, 1, "");
 //				List<AuditReportItem> auditReportItem = user.getAudit_report_items();
-				Logger.e(user.toString());
-				for (Session container: user){
-					try {
-						snappydb.put(String.valueOf(container.getId()), container);
-					} catch (SnappydbException e) {
-						e.printStackTrace();
+				Logger.e(String.valueOf(user.size()));
+				long startTimeRecord = System.currentTimeMillis();
+				for (int i = 0; i < 5000; i++) {
+					for (Session container : user) {
+						try {
+							snappydb.put(i+""+String.valueOf(container.getContainerId()), container);
+						} catch (SnappydbException e) {
+							e.printStackTrace();
+						}
 					}
+				}
+				long differenceRecord = System.currentTimeMillis() - startTimeRecord;
+				Logger.e("Time to record: " + String.valueOf(differenceRecord / 1000));
+
+			}
+		});
+		btngetContainer.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					long startTime = System.currentTimeMillis();
+					String [] key = snappydb.findKeys("GMDU");
+
+					Session session = snappydb.getObject(key[0],Session.class);
+					String foundKey = "";
+					for (int j = 0; j<key.length;j++){
+						foundKey = foundKey + "+" +key[j];
+					}
+					Logger.e("Session in DB: Found "+foundKey);
+					long difference = System.currentTimeMillis() - startTime;
+					Logger.e("Time to search: "+String.valueOf(difference));
+				} catch (SnappydbException e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -112,5 +146,20 @@ public class MyActivity extends Activity {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+		return null;
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader) {
+
 	}
 }
